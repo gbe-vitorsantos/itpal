@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT PAL - Notas</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header: Search and Add Button -->
+        <header class="app-header">
+            <div class="logo" id="appLogo" style="cursor: pointer;">
+                <h1>IT PAL <span>Notas</span></h1>
+            </div>
+            <div class="search-container">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="searchInput" placeholder="Pesquisar por título, tag ou descrição...">
+            </div>
+            <button id="btnThemeToggle" class="btn btn-icon" title="Alternar Tema Escuro/Claro">
+                <!-- Moon (Tema Claro Ativo) -->
+                <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <!-- Sun (Tema Escuro Ativo) -->
+                <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </button>
+            <button id="btnNewNote" class="btn btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span class="btn-label">Nova Nota</span>
+            </button>
+            <button id="btnToggleSidebar" class="btn btn-icon d-mobile-only">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+            </button>
+        </header>
+
+        <div class="main-content">
+            <!-- Sidebar: Tags Filter -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header" style="flex-direction: column; align-items: stretch; gap: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2>Tags</h2>
+                        <button id="btnClearFilters" class="btn btn-small btn-text" style="display: none;">Limpar</button>
+                    </div>
+                    <input type="text" id="searchTagsInput" placeholder="Procurar tags..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 0.875rem; background-color: var(--bg-color); color: var(--text-main);">
+                </div>
+                <div class="tags-list" id="tagsContainer">
+                    <!-- Tags will be rendered here dynamically -->
+                    <div class="loading-text">A carregar tags...</div>
+                </div>
+            </aside>
+
+            <!-- Content: Notes List -->
+            <main class="notes-area">
+                <!-- Categorias: frequentes em destaque + restantes num menu -->
+                <div class="category-bar" id="categoryBar"></div>
+                <div id="notesStatus" class="notes-status">A carregar notas...</div>
+                <div class="notes-grid" id="notesGrid">
+                    <!-- Notes will be rendered here -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal: Note Editor -->
+    <div class="modal-overlay" id="noteModal">
+        <div class="modal modal-wide">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nova Nota</h2>
+                <button class="btn-close" id="btnCloseModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="noteForm">
+                    <input type="hidden" id="noteId">
+                    <div class="form-group">
+                        <label for="noteTitle">Título</label>
+                        <input type="text" id="noteTitle" required placeholder="Ex: Registo de tarefas">
+                    </div>
+                    <div class="form-group">
+                        <label for="noteTags">Tags (separadas por vírgula)</label>
+                        <input type="text" id="noteTags" placeholder="Ex: budibase, criar user">
+                    </div>
+                    <div class="form-group">
+                        <label for="noteCategory">Categoria</label>
+                        <div class="category-field">
+                            <select id="noteCategory"></select>
+                            <div class="category-quick" id="noteCategoryQuick"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Descrição / Conteúdo</label>
+                        <div class="editor-wrapper">
+                            <div id="noteEditor"></div>
+                        </div>
+                        <input type="file" id="imageFileInput" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none;">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="btnDeleteNote" style="display: none;">Apagar</button>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="btnCancelNote">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnSaveNote">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: View Note -->
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal modal-wide">
+            <div class="modal-header">
+                <h2 id="viewModalTitle">Título da Nota</h2>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <div id="viewModalDate" class="note-date"></div>
+                    <button class="btn-close" id="btnCloseViewModal">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-body" style="padding-bottom: 0;">
+                <div class="note-tags" id="viewModalTags" style="margin-bottom: 1rem;"></div>
+            </div>
+            <div class="modal-body note-view-body">
+                <div class="ql-snow"><div class="ql-editor note-view" id="viewModalContent"></div></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnEditFromView">Editar</button>
+                <button type="button" class="btn btn-danger" id="btnDeleteFromView">Apagar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Gerir Categorias -->
+    <div class="modal-overlay" id="categoriesModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Categorias</h2>
+                <button class="btn-close" id="btnCloseCategories">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="category-new" id="categoryNewForm">
+                    <input type="color" id="newCategoryColor" value="#6366f1" title="Cor">
+                    <input type="text" id="newCategoryName" placeholder="Nova categoria..." required maxlength="40">
+                    <label class="freq-toggle" title="Marcar como frequente"><input type="checkbox" id="newCategoryFrequent"> Frequente</label>
+                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                </form>
+                <p class="category-hint">As categorias marcadas com ★ são frequentes: aparecem em destaque nos filtros e no editor.</p>
+                <div class="category-list" id="categoryList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Editor WYSIWYG e sanitização do HTML das notas -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

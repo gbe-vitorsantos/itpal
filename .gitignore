@@ -1,0 +1,14 @@
+# Dados reais (notas e imagens) — nunca para o repositório
+data/
+uploads/*
+!uploads/.htaccess
+
+# Cópias de segurança locais
+backup_pre_wysiwyg/
+
+# Sistema / editores
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
+.claude/
